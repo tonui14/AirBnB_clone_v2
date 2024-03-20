@@ -118,13 +118,34 @@ class HBNBCommand(cmd.Cmd):
         if not args:
             print("** class name missing **")
             return
-        elif args not in HBNBCommand.classes:
-            print("** class doesn't exist **")
-            return
-        new_instance = HBNBCommand.classes[args]()
-        storage.save()
-        print(new_instance.id)
-        storage.save()
+        if args:
+            args = args.split(" ")
+            class_name = args[0]
+            params_dict = {}
+            params = args[1:]
+            if class_name in HBNBCommand.classes:
+                try:
+                    new_instance = HBNBCommand.classes[class_name]()
+                    for param in params:
+                        param_key, param_value = param.split("=")
+                        if param_value.isdigit() or \
+                                re.match(r'-?\d+$', param_value):
+                            param_value = int(param_value)
+                        elif re.search(r'-?\d+\.\d+', param_value):
+                            param_value = float(param_value)
+                        else:
+                            param_value = param_value.replace('_', ' ') \
+                                                    .strip('"\'') \
+                                                    .replace('"', '\\"')
+                        params_dict.update({param_key: param_value})
+                    new_instance.__dict__.update(params_dict)
+                    print(new_instance.id)
+                    new_instance.save()
+                except Exception as e:
+                    print('Error: ', e)
+            else:
+                print("** class doesn't exist **")
+                return
 
     def help_create(self):
         """ Help information for the create method """
@@ -319,6 +340,7 @@ class HBNBCommand(cmd.Cmd):
         """ Help information for the update class """
         print("Updates an object with new information")
         print("Usage: update <className> <id> <attName> <attVal>\n")
+
 
 if __name__ == "__main__":
     HBNBCommand().cmdloop()
