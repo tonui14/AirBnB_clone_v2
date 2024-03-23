@@ -132,13 +132,18 @@ class HBNBCommand(cmd.Cmd):
                         if param_value.isdigit() or \
                                 re.match(r'-?\d+$', param_value):
                             param_value = int(param_value)
+                            params_dict.update({param_key: param_value})
                         elif re.search(r'-?\d+\.\d+', param_value):
                             param_value = float(param_value)
+                            params_dict.update({param_key: param_value})
                         else:
-                            param_value = param_value.replace('_', ' ') \
-                                                    .strip('"\'') \
-                                                    .replace('"', '\\"')
-                        params_dict.update({param_key: param_value})
+                            param_value = re.sub('_', " ", param_value)
+                            param_value = param_value.strip('"\'')
+                            param_value = re.sub(r'"', '\\"', param_value)
+                            if re.match(r'^[\[\{].+[\]\}]$', param_value):
+                                pass
+                            else:
+                                params_dict.update({param_key: param_value})
                     new_instance.__dict__.update(params_dict)
                     print(new_instance.id)
                     new_instance.save()
@@ -219,20 +224,38 @@ class HBNBCommand(cmd.Cmd):
         print("Destroys an individual instance of a class")
         print("[Usage]: destroy <className> <objectId>\n")
 
+    # def do_all(self, args):
+    #     """ Shows all objects, or all objects of a class"""
+    #     print_list = []
+
+    #     if args:
+    #         args = args.split(' ')[0]  # remove possible trailing args
+    #         if args not in HBNBCommand.classes:
+    #             print("** class doesn't exist **")
+    #             return
+    #         for k, v in storage._FileStorage__objects.items():
+    #             if k.split('.')[0] == args:
+    #                 print_list.append(str(v))
+    #     else:
+    #         for k, v in storage._FileStorage__objects.items():
+    #             print_list.append(str(v))
+
+    #     print(print_list)
+        
     def do_all(self, args):
         """ Shows all objects, or all objects of a class"""
         print_list = []
-
         if args:
             args = args.split(' ')[0]  # remove possible trailing args
             if args not in HBNBCommand.classes:
                 print("** class doesn't exist **")
                 return
-            for k, v in storage._FileStorage__objects.items():
-                if k.split('.')[0] == args:
-                    print_list.append(str(v))
+            args = HBNBCommand.classes[args]
+            result = storage.all(args)
+            for k, v in result.items():
+                print_list.append(str(v))
         else:
-            for k, v in storage._FileStorage__objects.items():
+            for k, v in storage.all().items():
                 print_list.append(str(v))
 
         print(print_list)
